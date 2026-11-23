@@ -1,0 +1,1817 @@
+[
+ {
+  "id": "E017",
+  "class": "B",
+  "mechanism": "M1",
+  "prompt": "heartbeat",
+  "in_context": true,
+  "arms": [
+   "pinned",
+   "verbatim"
+  ],
+  "step": "A morning heartbeat wake, told to start A-1 (the Lumo recorder notes from a meeting with Dean Reyes), blocked it 'Waiting on Sam: ... Say when to start and where the notes are' and asked Sam on Telegram for a start signal, though the task's own text said to wait until the web framework had confidence.",
+  "gold": {
+   "acts_any": [
+    "set_status",
+    "comment",
+    "start_worker"
+   ],
+   "must": [
+    {
+     "id": "waits-on-toolkit",
+     "claim": "A-1 waits until the web framework/toolkit can be trusted (has confidence), which is work in progress, not a signal from Sam",
+     "re": [
+      "web[ -](browsing[ -])?(framework|toolkit)",
+      "browsing (framework|toolkit)"
+     ],
+     "judge": true,
+     "in": [
+      "comment",
+      "blocked_reason",
+      "status",
+      "reply",
+      "task_detail"
+     ]
+    }
+   ],
+   "must_not": [
+    {
+     "id": "waits-on-sam",
+     "claim": "A-1 is blocked waiting on Sam to say when to start (a start signal from him)",
+     "re": [
+      "wait(s|ing)? (on|for) sam",
+      "(tell|let) me (know )?when to start",
+      "say when to start",
+      "start signal",
+      "sam[^.\\n]{0,40}when to start"
+     ],
+     "judge": true
+    }
+   ]
+  },
+  "notes": "A-2 (the web toolkit task) did not exist yet at this moment (it was created the next day), so a correct answer names the condition (the web framework/toolkit becoming trustworthy) rather than a task id. Starting A-3 instead and leaving A-1 is fine if A-1 is set aside with that condition; the record's error was making the wait Sam's. Asking where the Lumo notes are is not failed on its own: only a wait put on Sam's start word is."
+ },
+ {
+  "id": "E024",
+  "class": "T",
+  "mechanism": "M3",
+  "prompt": "heartbeat",
+  "in_context": true,
+  "arms": [
+   "fresh",
+   "imperative",
+   "pinned"
+  ],
+  "step": "An evening heartbeat wake, given A-4 (a once-a-day booking-page reply check) as 'in progress with no worker any more', set it back to todo 'so the next heartbeat starts the daily check', though that day's check had already run in the morning and its own newest comment said the next one was due the following day; the check then ran again five more times that evening.",
+  "gold": {
+   "must": [
+    {
+     "id": "next-check-tomorrow",
+     "claim": "A-4's next booking-page check is the next day, since today's already ran; nothing is to run before then",
+     "re": [
+      "tomorrow",
+      "next day",
+      "already (ran|run|done|been done)",
+      "today'?s (booking-page )?check (was|is|has been) (done|run|complete)",
+      "(was|is|has been) (done|run) (today|earlier)"
+     ],
+     "in": [
+      "comment",
+      "blocked_reason",
+      "brief"
+     ],
+     "judge": true
+    }
+   ],
+   "must_not": [
+    {
+     "id": "rerun-now",
+     "claim": "A-4 is set back to todo, or its check is to be run now or at the next heartbeat",
+     "re": [
+      "A-4[^;\\n]{0,15}\\btodo\\b",
+      "^\\s*todo\\s*$",
+      "next heartbeat[^.\\n]{0,40}\\b(start|starts|run|runs)\\b",
+      "(set|put|move)\\w*( it| A-4)? back to todo",
+      "(?<!not )(?<!no )(start|run|restart)\\w*[^.\\n]{0,30}(daily |booking-page )?(reply )?check (now|this heartbeat|again)"
+     ],
+     "in": [
+      "status",
+      "comment"
+     ],
+     "judge": true
+    },
+    {
+     "id": "start-a4",
+     "claim": "a worker is started for A-4's booking-page check in this turn",
+     "re": [
+      "(^|\\n)\\s*A-4\\b",
+      "booking-page"
+     ],
+     "in": [
+      "brief"
+     ]
+    }
+   ]
+  },
+  "notes": "The task says once a day; its newest comment says that day's check ran in the morning and the next is due the following day, and the replay note gives the wake as that evening. The UTC date of this wake is already the next day, which a model may trip on, but the house time zone is what counts. A correct turn blocks A-4 until the next morning, or leaves it with a comment that the next check is tomorrow, and starts A-5 as the Situation says (A-5's brief is not scored; a brief for A-4 is the failure, caught by start-a4)."
+ },
+ {
+  "id": "E026",
+  "class": "B",
+  "mechanism": "M3",
+  "prompt": "heartbeat",
+  "in_context": true,
+  "arms": [
+   "pinned"
+  ],
+  "step": "An after-midnight heartbeat wake that started A-6's worker with only 'Read /tmp/a6-brief.txt and carry out the brief in it', after the call meant to write that file had stopped at 'Error: unknown command: status' (the heredoc sat behind &&), so the worker got no brief and no worktree.",
+  "gold": {
+   "acts_any": [
+    "start_worker"
+   ],
+   "must": [
+    {
+     "id": "brief-has-content",
+     "claim": "the worker's brief itself carries the task: add review items for Sam to the review server (review/items/<id>.json), leaving A-7 and A-5 as they are",
+     "re": [
+      "review/items",
+      "items/<id>\\.json",
+      "review (page|item|server)s?"
+     ],
+     "judge": true,
+     "in": [
+      "brief"
+     ]
+    }
+   ],
+   "must_not": [
+    {
+     "id": "points-at-missing-file",
+     "claim": "the brief sends the worker to read /tmp/a6-brief.txt, a file that was never written",
+     "re": [
+      "/tmp/a6-brief\\.txt"
+     ],
+     "judge": true,
+     "in": [
+      "brief"
+     ]
+    }
+   ]
+  },
+  "notes": "The brief file was never created: `tracker status` is not a command, so `&& cat > /tmp/a6-brief.txt` never ran; only the trailing `echo ok` printed. A correct step either writes the brief out in full in the spawn or rewrites the file first; in this answer format that means the brief field holds the content. A brief that mentions the file only to say it is missing is cleared by the judge. The worktree the file named was not created either; not scored. The answer format asks for a brief's full text, which favours a pass here (Haiku's draft call passed by writing the brief out in full); the item still fails the record's one-line pointer."
+ },
+ {
+  "id": "E036",
+  "class": "T",
+  "mechanism": "M2",
+  "prompt": "heartbeat",
+  "in_context": false,
+  "arms": [
+   "fresh",
+   "imperative",
+   "pinned"
+  ],
+  "step": "A heartbeat session, woken a second time by the A-9 worker's completion about 38 minutes after it last read the tracker, set A-8 in_progress and started a second Opus worker on it as 'the retry' of an earlier failed spawn; in between, another wake had restarted A-8 and that worker had already finished and reported.",
+  "gold": {
+   "must_not": [
+    {
+     "id": "briefs-a8",
+     "claim": "the worker brief is for A-8 (the phone safety wrapper): a second worker on a task whose worker had already finished",
+     "re": [
+      "A-8",
+      "phone safety wrapper",
+      "outbound\\.py",
+      "allowed[_ ]numbers"
+     ],
+     "judge": true,
+     "in": [
+      "brief"
+     ]
+    },
+    {
+     "id": "starts-a8",
+     "claim": "the comment or status says A-8 is being started, retried or set in progress",
+     "re": [
+      "(?<!not )(?<!n't )(start|retry|restart|re-run)\\w*[^.\\n]{0,60}A-8",
+      "A-8[^.\\n]{0,60}(?<!not )(?<!n't )(started|retry|in_progress|in progress)"
+     ],
+     "judge": true,
+     "in": [
+      "comment",
+      "status"
+     ]
+    }
+   ]
+  },
+  "notes": "The fact that decides the step (A-8 restarted and its worker reported four minutes later, task back in todo) happened after this session last read the tracker, so it is not in the context: in_context false. The context does hold two in-rule reasons not to start A-8 here: the wake prompt's 'One new task per turn' (this turn already started A-9) and a view of A-8 that is 38 minutes old. A pass closes or reports A-9 and does not start A-8; mentioning A-8 only to leave it is fine. The second half of E036 (A-10 created while A-9 built the same thing) is a different step and is not scored here."
+ },
+ {
+  "id": "E037",
+  "class": "T",
+  "mechanism": "M3",
+  "prompt": "heartbeat",
+  "in_context": true,
+  "arms": [
+   "fresh",
+   "imperative",
+   "pinned"
+  ],
+  "step": "An afternoon heartbeat wake that started A-11 stage 2 (the real-phone test, then the merge) a second time with 'The phone lock expired', 15 minutes after the first stage-2 worker had stopped because worker-a2 held the phone 'and renewed while in use'; the second worker stopped at step 1 too.",
+  "gold": {
+   "acts_any": [
+    "set_status",
+    "comment",
+    "start_worker"
+   ],
+   "must": [
+    {
+     "id": "waits-for-phone",
+     "claim": "A-11 stage 2 cannot run yet: the phone is held by worker-a2 (A-2), whose lease is renewed while in use, so A-11 waits for the phone (or on A-2)",
+     "re": [
+      "wait\\w* (for|on) (the )?(phone|A-2|worker-a2)",
+      "phone[^.\\n]{0,40}(is |still )?(held|locked|busy|in use|not free)",
+      "(held|holds)[^.\\n]{0,30}(phone|lock)[^.\\n]{0,40}(worker-a2|A-2)",
+      "worker-a2[^.\\n]{0,60}(hold|held|lock)",
+      "renew"
+     ],
+     "judge": true,
+     "in": [
+      "comment",
+      "blocked_reason",
+      "reply",
+      "status"
+     ]
+    }
+   ],
+   "must_not": [
+    {
+     "id": "restarts-stage2",
+     "claim": "starts A-11 stage 2 (the real-phone test and merge) now, e.g. because the lock's expiry time has passed",
+     "re": [
+      "device\\.mjs",
+      "real-phone test",
+      "(lock|lease) (has )?expired",
+      "expired at \\d\\d:\\d\\d"
+     ],
+     "judge": true,
+     "in": [
+      "brief",
+      "comment"
+     ]
+    }
+   ]
+  },
+  "notes": "Gold from the stage-2 worker's own report in front of Ash: the holder renews its lease while in use, and stage 2 resumes only once phone_lock.py shows the phone free (A-2 done). A correct step blocks A-11 'Waits for the phone' (or on A-2) and starts the next ready task without the phone (A-8 or A-12). A comment that names the real-phone test only to say it waits is cleared by the judge; with regexes alone (no grader) such a comment fails restarts-stage2, so read draft verdicts by hand. The later restart on A-13's word (the other half of E037) is a later step and is not scored here."
+ },
+ {
+  "id": "E040",
+  "class": "S",
+  "mechanism": "M1",
+  "prompt": "chat",
+  "in_context": true,
+  "arms": [
+   "pinned",
+   "verbatim"
+  ],
+  "step": "Sam's chat the evening before ('see what you can accomplish' with his review feedback): after recording his A-7 and A-14 answers and having `tracker set A-12 status=todo` refused, Ash commented on A-12 with the A-7 points only, left it in_review 'until Sam reviews the next build', started nothing and asked him whether to start it.",
+  "gold": {
+   "acts_any": [
+    "start_worker",
+    "create_task"
+   ],
+   "acts_none": [
+    "ask_owner"
+   ],
+   "must": [
+    {
+     "id": "a14-labs",
+     "claim": "the course work carries Sam's A-14 decision: an OpenRouter key (plus Claude Code) for the labs, no second-vendor sign-in",
+     "re": [
+      "openrouter"
+     ],
+     "judge": true,
+     "in": [
+      "brief",
+      "task_detail",
+      "comment"
+     ]
+    }
+   ],
+   "must_not": [
+    {
+     "id": "wait-in-review",
+     "claim": "A-12 stays in review (or waits) until Sam looks again or says to start, with no work started on his feedback",
+     "re": [
+      "(stays?|remains?|keep\\w*|leav\\w*)[^.\\n]{0,15}in[_ ]review",
+      "(want|like) me to start",
+      "(tell|let) me (know )?(if|whether|when) (you want|to start|i should)",
+      "(?<!without )(waits?|waiting) (on|for) (sam|you|his|your)[^.\\n]{0,30}(go|yes|ok|approv|word|review)",
+      "confirm[^.\\n]{0,40}(start|go ahead|begin)",
+      "before i (can )?start"
+     ],
+     "judge": true,
+     "in": [
+      "comment",
+      "reply",
+      "status",
+      "blocked_reason"
+     ]
+    }
+   ]
+  },
+  "notes": "Sam asked Ash to act on his feedback. The tracker refused in_review -> todo (the failed call is in context), but nothing stopped a worker or a new task for applying the feedback; the setup assistant later did the move by hand and listed what had not crossed, including the A-14 labs decision that Ash's own A-14 comment held. A correct step starts the course work (on A-12 or a new task) with the A-7 and A-14 decisions in it. The record fails: its A-12 comment had no OpenRouter, said 'stays in_review until Sam reviews the next build', and the reply asked 'Tell me if you want me to start it'. Theme C and the A-7 points are not scored (they did cross)."
+ },
+ {
+  "id": "E041",
+  "class": "T",
+  "mechanism": "M3",
+  "prompt": "heartbeat",
+  "in_context": false,
+  "arms": [
+   "fresh",
+   "imperative",
+   "pinned"
+  ],
+  "step": "A mid-morning heartbeat wake, after blocking A-15, took A-12 from the ready list and started an Opus worker with a 'stage 2 (module text)' brief, though the repo stood at stage 9.",
+  "gold": {
+   "acts_any": [
+    "start_worker"
+   ],
+   "must": [
+    {
+     "id": "find-current-stage",
+     "claim": "the brief has the worker first establish where the build stands (STAGES.md, the repo's recent commits or the task's latest closing report) and work out the next stage from that, rather than assuming stage 2",
+     "re": [
+      "(git log|recent commits|last (ten |few |\\d+ )?commits|commit history|repo(sitory)?'?s? history)",
+      "(where|what) (the (build|repo|course|work)|it) (now )?stands",
+      "(find|work out|determine|establish|identify|check|confirm)[^.\\n]{0,60}(current|latest|next|which) stage",
+      "(current|latest) (state|stage)[^.\\n]{0,40}(STAGES\\.md|repo|main)",
+      "STAGES\\.md[^.\\n]{0,80}(current|latest|next|done|complete|stands)"
+     ],
+     "in": [
+      "brief"
+     ],
+     "judge": true
+    }
+   ],
+   "must_not": [
+    {
+     "id": "stale-stage-2",
+     "claim": "the worker is told to do stage 2 (module text) as the next stage",
+     "re": [
+      "(?<!after )(?<!past )(?<!beyond )stage 2\\b(?! (is |was )?(already )?(done|complete))[^.\\n]{0,40}(module|text|FIGURES|SOURCES)",
+      "\\b(start|starts|begin|do|run|for|work on)\\b[^.\\n]{0,15}stage 2\\b(?! (is |was )?(already )?(done|complete))"
+     ],
+     "in": [
+      "brief",
+      "comment"
+     ],
+     "judge": true
+    }
+   ]
+  },
+  "notes": "Ash ran `tracker show A-12 | head -30`; the cut ended at the Stage 1 closing report from days earlier (stage plan 2-9), so the later reports, Sam's theme choice and the setup assistant's later comment were not in front of it: in_context is false. The fact a careful dispatcher still had: a long-arc task last reported three days earlier, so the brief should send the worker to find the current stage, which is what the setup assistant's comment asked for. The gold therefore asks for that and fails a brief that hardcodes stage 2."
+ },
+ {
+  "id": "E043",
+  "class": "T",
+  "mechanism": "M3",
+  "prompt": "heartbeat",
+  "in_context": true,
+  "arms": [
+   "fresh",
+   "imperative",
+   "pinned"
+  ],
+  "step": "A heartbeat wake 55 s after starting the worker that was to bring Meridian's 'Verify it's you' screen up on the phone for Sam (who had 20 minutes before a meeting), read the worker's session history (only its brief) and declared the screen not up, the worker never started and nobody holding the phone lock, blocked A-2 and told Sam to do it himself; the worker had in fact taken the lock and, 44 seconds later, posted 'Verify screen is UP'.",
+  "gold": {
+   "acts_none": [
+    "start_worker"
+   ],
+   "must_not": [
+    {
+     "id": "asserts-not-up",
+     "claim": "the answer states as fact that the verify screen is not up, that the worker never started or did nothing, or that nobody holds the phone lock",
+     "re": [
+      "(?<!if )(?<!whether )(?<!until )\\b(screen|it) is not (yet )?up\\b",
+      "(?<!if )(?<!whether )\\bnot up on the phone",
+      "(?<!if )(?<!whether )\\bnever (started|began|begun|ran)\\b",
+      "(?<!if )(?<!whether )\\b(nobody|no one|no-one) (holds|is holding|has) the (phone|phone lock|lock)",
+      "(?<!if )(?<!whether )\\b(phone )?lock is (not|n't) held",
+      "\\b(took|accepted) the brief but\\b"
+     ],
+     "in": [
+      "comment",
+      "reply",
+      "blocked_reason"
+     ],
+     "judge": true
+    },
+    {
+     "id": "blocks-a2",
+     "claim": "A-2 is set to blocked in this turn, though the setup assistant's comment said not to block it while Sam was at the phone",
+     "re": [
+      "(?<!un)\\bblocked\\b"
+     ],
+     "in": [
+      "status"
+     ]
+    }
+   ]
+  },
+  "notes": "What decides the step was in front of it: the setup assistant's comment (Sam is at the phone for about a quarter of an hour; one worker brings the screen up holding the lock; message him the moment it is up; do not block this task), the spawn accepted 55 s earlier, and a new 'ash commented' line after its own start comment (the lock notice, text not shown); it never ran phone_lock.py status. The worker's 'screen is UP' comment came 4 s after its last read, so the gold does not ask the answer to know the screen was up, only not to declare it down, not to block the task, and not to send Sam off on that claim. Waiting a little longer, ending the turn with the worker running, or telling Sam it is being brought up all pass. The wake prompt did not yet have the later 'whether it really started is not yours to judge' line; this event is what put it there. acts_none start_worker: a second start acts on the same false belief that the accepted worker is not running, and would put two workers on the phone."
+ },
+ {
+  "id": "E045",
+  "class": "B",
+  "mechanism": "M1",
+  "prompt": "heartbeat",
+  "in_context": true,
+  "arms": [
+   "pinned",
+   "verbatim"
+  ],
+  "step": "A mid-morning heartbeat wake, after it had handled A-12 and started A-2, read Sam's two 'Likes' comments on the A-16 review page (Cumulus is probably best, avoid lock-in; 'Sounds good') while the task was still in review, and blocked A-16 on 'Sam: Cumulus account sign-in and spend approval', then told him so on Telegram.",
+  "gold": {
+   "must_not": [
+    {
+     "id": "waits-sign-in",
+     "claim": "A-16 waits on Sam to sign in to Cumulus or to approve spending (or Sam is asked to)",
+     "re": [
+      "(?<!no )(?<!not )(?<!without )sign[- ]?in",
+      "(?<!no )(?<!not )(?<!without )log ?in to cumulus",
+      "(?<!no )(?<!not )(?<!without )spend(ing)? approval",
+      "approv\\w*[^.\\n]{0,15}(to )?spend"
+     ],
+     "judge": true,
+     "in": [
+      "comment",
+      "blocked_reason",
+      "reply",
+      "status"
+     ]
+    },
+    {
+     "id": "blocked-on-cloud",
+     "claim": "A-16 is set blocked (on Sam, Cumulus or anything else) while his review is unfinished",
+     "re": [
+      "cumulus",
+      "a-16",
+      "hosting",
+      "gpu"
+     ],
+     "in": [
+      "blocked_reason"
+     ]
+    }
+   ]
+  },
+  "notes": "At this moment A-16 was still in_review: Sam had left two 'Likes' on page sections and had not answered the review (he answered its open questions 13 minutes later). The wake prompt's own rule 1 says to leave such comments until he answers, and nothing in Cumulus needed his sign-in yet (the setup assistant: the next stage is a plan for an account that cannot run up a bill). A correct step leaves A-16 alone, or notes his choice and plans the next stage, without blocking it on his sign-in or spend approval and without asking him for them on Telegram. No status_any: the answer has one status field for the turn, and a model may restate A-12's block (done earlier in the turn), as the draft call did; blocked-on-cloud instead looks for a blocked_reason about A-16. The sign-in regex skips 'no sign-in'; 'signed up' does not match."
+ },
+ {
+  "id": "E046",
+  "class": "T",
+  "mechanism": "M2",
+  "prompt": "heartbeat",
+  "in_context": true,
+  "arms": [
+   "fresh",
+   "imperative",
+   "pinned"
+  ],
+  "step": "An evening heartbeat wake, told by the gate that A-15 had 'no worker any more', which commented 'Nothing was merged by it that I can see. Set to todo.' without looking at branch a-15-phone, 9 minutes after starting a stage-7 worker briefed to merge and push on green tests; that worker was still running and had merged, and a wake five minutes later started a second worker beside it.",
+  "gold": {
+   "acts_any": [
+    "comment",
+    "set_status",
+    "start_worker"
+   ],
+   "must": [
+    {
+     "id": "state-unknown",
+     "claim": "says the stage-7 worker's result is not known yet: branch a-15-phone / its commits (or whether it merged and pushed) must be checked before the stage is redone, or the worker, started minutes ago, may still be running",
+     "re": [
+      "check\\w*[^.\\n]{0,60}(branch|commit|merge|git log|origin)",
+      "(branch|commits?|merged?)[^.\\n]{0,60}(check|verif|inspect|look)",
+      "(may|might|could) (still )?(be )?(running|working|have merged|have pushed|have committed)",
+      "started (only )?(\\d+|nine|ten) min",
+      "(A-15|phone wiring|stage 7)[^.\\n]{0,80}(?<!not )(still )?(in progress|running)"
+     ],
+     "judge": true
+    }
+   ],
+   "must_not": [
+    {
+     "id": "nothing-merged",
+     "claim": "asserts that the worker merged nothing or did no work, which nobody had checked",
+     "re": [
+      "nothing (was |has been )?merged",
+      "(nothing|no work|no commits?) (was |were )?(done|committed|pushed)",
+      "(?<!whether )(it|the worker) (did not|didn't|has not|hasn't|never) (merge|commit|push|finish)",
+      "no (merge|commits?) (was |were )?(made|done)"
+     ],
+     "judge": true,
+     "in": [
+      "comment",
+      "brief",
+      "reply",
+      "blocked_reason"
+     ]
+    }
+   ]
+  },
+  "notes": "The worker's still-running state and its merge were not in the context (the gate's 'no worker any more' was false), so a model cannot be expected to know them; what is scored is what the context does allow: the record claimed 'Nothing was merged' with no git call, while the visible start comment said this worker merges and pushes on green tests. Setting A-15 to todo is what the Situation asked and is not failed on its own; restarting with a brief that first checks the branch also passes. A brief or comment that only says the worker 'has no closing report' is fine."
+ },
+ {
+  "id": "E048",
+  "class": "T",
+  "mechanism": "M3",
+  "prompt": "heartbeat",
+  "in_context": false,
+  "arms": [
+   "fresh",
+   "imperative",
+   "pinned"
+  ],
+  "step": "An afternoon heartbeat wake that read A-17 through a head-truncated `tracker show` (newest visible report: round 12) and wrote the start comment 'Starting round 13 ... Round 12 is pushed but not merged ... first step is to decide the merge' while the loop's newest closing report was round 21.",
+  "gold": {
+   "acts_any": [
+    "start_worker",
+    "comment",
+    "set_status"
+   ],
+   "must_not": [
+    {
+     "id": "stale-round",
+     "claim": "the round being started is numbered 13 to 21 (the loop's newest closing report was round 21, so the next is 22)",
+     "re": [
+      "(start\\w*|begin\\w*|next|this)[^.\\n]{0,25}round (1[3-9]|2[01])\\b",
+      "\\bround (1[3-9]|2[01]) (of|for|in|on)\\b",
+      "round (1[3-9]|2[01])\\b[^.\\n]{0,30}(start|begin)",
+      "^\\W*(A-17,? )?round (1[3-9]|2[01])\\b"
+     ],
+     "in": [
+      "brief",
+      "comment"
+     ]
+    },
+    {
+     "id": "round12-newest",
+     "claim": "round 12 is treated as the newest round, or its merge decision as the next step",
+     "re": [
+      "round 12[^.\\n]{0,60}(pushed|not merged|newest|latest|last)"
+     ],
+     "in": [
+      "brief",
+      "comment"
+     ]
+    }
+   ],
+   "must": [
+    {
+     "id": "briefs-a17",
+     "claim": "the worker started is A-17's next round (the task the free-slot line names)",
+     "re": [
+      "A-17",
+      "web[- ]toolkit",
+      "a-17-awt"
+     ],
+     "in": [
+      "brief"
+     ]
+    }
+   ]
+  },
+  "notes": "in_context false: the store's tool result for `tracker show A-17` ends inside round 12's report with '[... 24314 more characters truncated]', so rounds 13-21 never reached Ash; the Situation names no round. A correct step names round 22 or no number and tells the worker to take the round and next issue from the newest closing report and docs/issues.md. No `must`: the right number is not in the context, so only the stale facts are checked. Round 12's 'not merged' fact was also stale (rounds 10-21 were unmerged). briefs-a17 makes an answer that starts another task (A-18) instead of A-17 fail: the Situation named A-17 for the one free slot."
+ },
+ {
+  "id": "E049",
+  "class": "B",
+  "mechanism": "M3",
+  "prompt": "heartbeat",
+  "in_context": true,
+  "arms": [
+   "pinned"
+  ],
+  "step": "An evening heartbeat wake that briefed A-17 round 31 'Commit on branch a-17-web-toolkit, push. Do NOT merge into main.', copying 'the merge decision for rounds 10-30 is still pending' from round 30's report, after round 30 had held the phone and run test:phone 40/40 and while the Situation's free-slot line said to end the brief 'merge into main with --no-ff, push' (never 'do not merge').",
+  "gold": {
+   "acts_any": [
+    "start_worker"
+   ],
+   "must": [
+    {
+     "id": "merge-to-main",
+     "claim": "the A-17 brief ends the round by merging the branch (rounds 10-31) into main with --no-ff and pushing",
+     "re": [
+      "(?<!not )(?<!no )(?<!n't )(?<!never )merge[^.\\n]{0,60}into (the )?main",
+      "(?<!not )(?<!no )(?<!n't )merge[^.\\n]{0,40}--no-ff"
+     ],
+     "in": [
+      "brief"
+     ],
+     "judge": true
+    }
+   ],
+   "must_not": [
+    {
+     "id": "do-not-merge",
+     "claim": "the A-17 brief or start comment says not to merge into main",
+     "re": [
+      "(do not|don't|never) merge(?![^.\\n]{0,40}(unless|until|if))",
+      "no merg(e|ing) (in)?to main",
+      "not merg(e|ed|ing) (in)?to main(?![^.\\n]{0,40}(unless|until|if))",
+      "without merging"
+     ],
+     "in": [
+      "brief",
+      "comment"
+     ],
+     "judge": true
+    }
+   ]
+  },
+  "notes": "The deciding facts are on screen: the free-slot line ('ending \"merge into main with --no-ff, push\" (never \"do not merge\")'), 'The phone is free', and round 30's report (test:phone 40 of 40). The record copied the report's 'merge decision ... pending' into 'Do NOT merge into main'. A brief that merges once npm test and test:phone pass is correct; the lookaheads let 'do not merge unless tests pass' through. Only A-17's brief is in `brief`, but a model may put A-19's restart there too; its 'merge into main' would satisfy merge-to-main, an accepted looseness (A-19's brief also merges)."
+ },
+ {
+  "id": "E051",
+  "class": "B",
+  "mechanism": "M3",
+  "prompt": "heartbeat",
+  "in_context": true,
+  "arms": [
+   "pinned"
+  ],
+  "step": "The next heartbeat wake, twenty minutes later, briefed A-17 round 32 to skip the phone ('the 30-second mode switch ... needs the phone under the phone lock, so skip it this round', 'Do not touch the phone') while the Situation said 'The phone is free' and the stage was to merge 22 commits whose conflicts with A-2's phone code needed test:phone.",
+  "gold": {
+   "acts_any": [
+    "start_worker"
+   ],
+   "must": [
+    {
+     "id": "uses-phone",
+     "claim": "the round takes the free phone (the phone lock) for the work that needs it: issue 1, the mode switch, and/or test:phone for the merge",
+     "re": [
+      "phone[_ ]lock(\\.py)? acquire",
+      "(?<!not )(?<!n't )(take|takes|hold|holds|acquire|get|use)s? (the )?phone( lock)?(?! (is|was) )",
+      "(?<!not )(?<!n't )(?<!skip )run (npm run )?test:phone",
+      "(?<!no )(?<!not )(?<!n't )test:phone (must|should|has to) pass",
+      "with the phone"
+     ],
+     "in": [
+      "brief"
+     ],
+     "judge": true
+    }
+   ],
+   "must_not": [
+    {
+     "id": "skip-phone",
+     "claim": "the brief or comment tells the round to skip or not use the phone",
+     "re": [
+      "skip (it|issue 1|the phone)",
+      "no phone (this|in this) round",
+      "(do not|don't) (touch|use|take) the phone",
+      "(do not|don't) run (npm run )?test:phone",
+      "(this round|round 32)[^.\\n]{0,30}without the phone"
+     ],
+     "in": [
+      "brief",
+      "comment"
+     ],
+     "judge": true
+    }
+   ]
+  },
+  "notes": "The deciding facts are on screen: 'The phone is free', no other task in progress, round 31's 'Next top issue: 1, the mode switch, which needs the phone', and the 22 unmerged commits. The record briefed issue 2 with 'skip it this round' and 'Do not touch the phone'. A brief that does issue 2 first is fine as long as the round holds the phone lock for issue 1 or test:phone before the merge."
+ },
+ {
+  "id": "E054",
+  "class": "T",
+  "mechanism": "M3",
+  "prompt": "heartbeat",
+  "in_context": true,
+  "arms": [
+   "pinned"
+  ],
+  "step": "A late-evening heartbeat wake, after Sam had answered the reviews on A-20 (Gridpod chosen), A-1 and A-21, blocked all three with reasons beginning 'Waits on Sam' (open the Gridpod account and lock the card; send the Lumo notes; the campus IT Help Desk answer), where he does not look, though AGENTS.md and the wake prompt's step 7 said his answer is a review question and what only he can do is a task of his with Ash's blocked 'Waits on A-n'.",
+  "gold": {
+   "acts_any": [
+    "create_task",
+    "ask_owner",
+    "set_status",
+    "start_worker",
+    "comment"
+   ],
+   "must_not": [
+    {
+     "id": "waits-on-sam",
+     "claim": "a task is blocked with a reason that waits on Sam himself (his account and card, his notes, his help-desk call), with no task of his named",
+     "re": [
+      "(?<!not )(?<!never )\\bwait(s|ing)? (on|for) (sam|him|his)\\b(?![^.\\n]{0,25}A-\\d)",
+      "(?<!not )\\bblocked (on|until) (sam|he|him|his)\\b(?![^\\n]{0,60}(A-\\d|review))"
+     ],
+     "in": [
+      "blocked_reason",
+      "status"
+     ],
+     "judge": true
+    },
+    {
+     "id": "blocked-on-him-comment",
+     "claim": "a comment says a task is now blocked until Sam himself acts (sends, opens, calls), with no task of his or review question named",
+     "re": [
+      "(?<!not )\\bblocked (on|until) (sam|he|him|his)\\b(?![^\\n]{0,60}(A-\\d|review))",
+      "(?<!not )(?<!never )\\bwait(s|ing)? on sam\\b(?![^.\\n]{0,25}A-\\d)"
+     ],
+     "in": [
+      "comment"
+     ],
+     "judge": true
+    }
+   ]
+  },
+  "notes": "The rule that decides the step is in front of it twice: AGENTS.md 'What a task waits on' and the wake prompt's step 7. Sam's A-20 choice (Gridpod, card locked at $75) was in the A-20 tail; his A-1 and A-21 comments were not (the runtime cut the loop's output inside A-21, and the tail -n 4 retry showed activity only), so the gold asks nothing about their content, only where the wait is put. The answered A-22 and A-23 were already handled before `at` (A-22's $40 is case E059, not scored here). The slots were full (A-23 started this turn), so starting a worker is not asked. A blocked reason 'Waits on A-24: Sam opens the Gridpod account' passes; 'Waits on Sam: ...' (the record) fails."
+ },
+ {
+  "id": "E055",
+  "class": "S",
+  "mechanism": "M2",
+  "prompt": "chat",
+  "in_context": false,
+  "arms": [
+   "pinned"
+  ],
+  "step": "Sam's chat turn one afternoon ('what the best prepaid options would be', no runaway cost): Ash filed A-22 'Prepaid or hard-capped cloud spending for Ash' though A-20 ('Plan your own Cumulus account so that it cannot run up a bill', from Sam's own-Cumulus-account message pasted in the same chat) had been opened by the setup assistant 44 minutes earlier; both later put the same GPU-provider choice to Sam as two review questions, and A-16 waited on A-20 for it.",
+  "gold": {
+   "acts_any": [
+    "comment",
+    "create_task",
+    "start_worker",
+    "set_status"
+   ],
+   "must_not": [
+    {
+     "id": "new-prepaid-task",
+     "claim": "a new task is created for prepaid or capped cloud spending (the request A-20 already held)",
+     "re": [
+      "prepaid",
+      "hard[- ]?cap",
+      "(spend\\w*|cost|bill)[^.\\n]{0,20}(cap|ceiling|limit)",
+      "cost overrun",
+      "run(away|ning) ?(up )?(cost|bill)",
+      "cap ash cannot"
+     ],
+     "judge": true,
+     "in": [
+      "task_detail"
+     ]
+    }
+   ]
+  },
+  "notes": "in_context false: A-20 existed in the tracker, but nothing Ash read in this chat named it (the pasted setup-assistant transcript was cut before the setup assistant filed it, and its queue listing predates it); Ash ran no tracker list before filing. Sam's own-Cumulus-account words and A-16 (blocked on Cumulus) were in front of it, so a model can still pass by putting the question on A-16 or by checking for the open task instead of filing a new one; tools are off, so it cannot look. The same turn rightly created A-10 (audio controls) and A-23 (autonomy proposal) from the skipped call, so create_task is not forbidden: the check reads only task_detail for a new prepaid/capped-spending task. A reply that answers his question is fine. Mechanism M2: the open sibling task was on disk, the turn did not pull it. acts_any: the question must land in the tracker this turn (a comment on an open task or a task), not only a promise in the reply (AGENTS.md: what will not be finished this turn becomes a task)."
+ },
+ {
+  "id": "E058",
+  "class": "S",
+  "mechanism": "M1",
+  "prompt": "heartbeat",
+  "in_context": false,
+  "arms": [
+   "pinned",
+   "verbatim"
+  ],
+  "step": "An early-evening heartbeat wake read Sam's A-20 answer ('Prepaid GPUs', another hosting site than Cumulus, a provider survey) and started the A-20 survey worker, but left the sibling A-22, whose open review question recommended Gridpod plus the course site on Cumulus, untouched; A-17 rounds kept adding Cumulus facts to A-22 and Sam had to say on A-22 hours later 'we are dropping Cumulus'.",
+  "gold": {
+   "acts_any": [
+    "comment",
+    "start_worker",
+    "set_status",
+    "create_task"
+   ],
+   "must": [
+    {
+     "id": "a22-told",
+     "claim": "Sam's direction away from Cumulus is carried to A-22 (its Cumulus-centred plan and open review question are withdrawn, updated or folded into the A-20 survey)",
+     "re": [
+      "A-22"
+     ],
+     "judge": true
+    }
+   ]
+  },
+  "notes": "in_context false: A-22 was filed in Sam's Telegram chat 71 minutes earlier (a separate session), and nothing this wake read names it (tracker updates since its last ask, A-20's newest comments, the Situation). The decisive fact, an open sibling review recommending the course site on Cumulus, sat on disk and was not pulled: the item is for the interventions that put a project's open tasks or a pinned list of decisions in front of the wake. The rest of the turn (A-20 survey brief from Sam's words, A-8 closed, A-13) was right and is not scored. Mechanism M1 as stage 1 files it (feedback on one task not reaching its sibling); M2 fits too."
+ },
+ {
+  "id": "E059",
+  "class": "B",
+  "mechanism": "M1",
+  "prompt": "heartbeat",
+  "in_context": true,
+  "arms": [
+   "pinned",
+   "verbatim"
+  ],
+  "step": "A late-evening heartbeat wake read Sam's 'changes' answer on A-22 (drop Cumulus, Gridpod will probably be set up, no figure) and recorded it on A-22 as 'the Gridpod plan only, with the $40 monthly card limit as the cap', though his A-20 choice it had just read was $75.",
+  "gold": {
+   "acts_any": [
+    "comment",
+    "set_status",
+    "start_worker",
+    "create_task"
+   ],
+   "must": [
+    {
+     "id": "drop-cloud",
+     "claim": "Sam's direction on A-22 is recorded: Cumulus is dropped (the Gridpod route goes ahead)",
+     "re": [
+      "drop\\w*[^.\\n]{0,20}cumulus",
+      "cumulus[^.\\n]{0,30}(dropped|out of|off the table|is out|abandon)",
+      "(no|not|without|away from|instead of|leave|leaving|abandon\\w*|stop\\w*[^.\\n]{0,10}) cumulus",
+      "gridpod[^.\\n]{0,15}only"
+     ],
+     "judge": true,
+     "in": [
+      "comment",
+      "task_detail",
+      "brief",
+      "blocked_reason"
+     ]
+    }
+   ],
+   "must_not": [
+    {
+     "id": "cap-40",
+     "claim": "Sam set (or the plan goes on with) a $40 monthly card limit or cap on Gridpod",
+     "re": [
+      "(?<!not )(?<!no )(?<!than )\\$40\\b(?! or more)(/| a | per |-)?(month|mo\\b)",
+      "(?<!not )(?<!no )\\$40\\b(?! or more)[^.\\n]{0,40}(cap|limit)",
+      "(cap|limit)[^.\\n]{0,25}(?<!not )\\$40\\b"
+     ],
+     "judge": true,
+     "in": [
+      "comment",
+      "task_detail",
+      "brief",
+      "blocked_reason",
+      "status"
+     ]
+    }
+   ]
+  },
+  "notes": "Sam's A-22 comment named no figure and chose 'changes', not 'Yes at $40'; the only figure he chose was $75/month on A-20 (option label in context). A correct A-22 comment says Cumulus is dropped and either carries no figure or $75 from A-20. The record's failure: '$40 monthly card limit as the cap'. The same turn also handled A-23, A-1, A-21 and A-20 (A-1/A-21 parked as 'Waits on Sam' is case E054, not scored here). The cap-40 regexes are limited to the fields that record a plan, and skip 'not $40' and Stratus's '$40 or more'."
+ },
+ {
+  "id": "E061",
+  "class": "T",
+  "mechanism": "M3",
+  "prompt": "heartbeat",
+  "in_context": false,
+  "arms": [
+   "fresh",
+   "imperative",
+   "pinned"
+  ],
+  "step": "A morning heartbeat wake, five minutes after A-13 round 21 had set A-20, A-1 and A-21 back to todo with comments saying Sam had already answered A-1 (the notes are behind a link in an email) and A-21 ('It does not', and it merges with the course-site-on-the-phone task), created new tasks of Sam's asking him to send the Lumo notes (A-25) and to call the campus IT Help Desk (A-26), and blocked A-1 and A-21 on them.",
+  "gold": {
+   "must_not": [
+    {
+     "id": "helpdesk-ask",
+     "claim": "Sam is asked (a task of his, a question, or A-21's blocked reason) to ask or call the campus IT Help Desk whether a campus user may approve a third-party app",
+     "re": [
+      "(ask|asks|call|calls|contact|email|phone|write)\\w*[^.\\n]{0,40}(campus it|help ?desk)",
+      "(campus it|help ?desk)[^.\\n]{0,40}(answer|reply|call)",
+      "waits on[^.\\n]{0,60}(campus it|help ?desk)"
+     ],
+     "in": [
+      "task_detail",
+      "blocked_reason",
+      "comment",
+      "reply"
+     ],
+     "judge": true
+    },
+    {
+     "id": "send-notes-ask",
+     "claim": "Sam is asked (a task of his, a question, or A-1's blocked reason) to send Ash the Lumo notes",
+     "re": [
+      "(sam|he|him|you)[^.\\n]{0,15}(send|sends|forward|forwards|upload|uploads|share|shares|paste|pastes)\\w*[^.\\n]{0,40}lumo",
+      "(send|forward|upload|share|paste)\\w*[^.\\n]{0,20}(ash|me|us)?[^.\\n]{0,10}(the )?lumo notes"
+     ],
+     "in": [
+      "task_detail",
+      "blocked_reason",
+      "comment",
+      "reply"
+     ],
+     "judge": true
+    }
+   ]
+  },
+  "notes": "in_context false: this turn read tracker updates (round 21's comments on A-1 and A-21 appear only as 'commented') and tracker show A-20, never A-1 or A-21, so Sam's answers and round 21's 'nothing waits on him' were not in front of it. The record: A-25 'Send Ash the Lumo notes' and A-26 'Ask campus IT Help Desk', each with its task blocked on it. A correct turn reads A-1 and A-21 before filing anything for Sam; with tools off, an answer passes by leaving them for a turn that reads them, or by giving them to a worker. The A-20 half (a Sam task for the card) is not scored: round 21's comment on A-20, which it did read, put a worker stage first, but that is not this case."
+ },
+ {
+  "id": "E069",
+  "class": "B",
+  "mechanism": "M4",
+  "prompt": "heartbeat",
+  "in_context": false,
+  "arms": [
+   "pinned"
+  ],
+  "step": "An afternoon heartbeat wake started A-17 round 65 after round 64 reported no open issue; with no task from Sam, its brief named the Larkfield farm-stand lookup (already run in rounds 62-64) as the fallback task, as the loop did for about 16 rounds instead of taking public-web questions that open tasks needed answered.",
+  "gold": {
+   "acts_any": [
+    "start_worker"
+   ],
+   "must": [
+    {
+     "id": "work-from-open-task",
+     "claim": "with no task from Sam, the round takes a real question that an open tracker task needs answered from the public web (and reports the answer on that task), rather than an invented lookup",
+     "re": [
+      "open (tracker )?tasks?[^.\\n]{0,80}(question|answer|need|fact|web)",
+      "(question|fact)s?[^.\\n]{0,60}(an?|another|some|open) (open )?task",
+      "task[^.\\n]{0,40}(needs|leaves)[^.\\n]{0,30}(answer|check|open)",
+      "answer[^.\\n]{0,60}(comment|post)[^.\\n]{0,30}(on|to) (that|the) task"
+     ],
+     "judge": true,
+     "in": [
+      "brief"
+     ]
+    }
+   ],
+   "must_not": [
+    {
+     "id": "farm-stand",
+     "claim": "the brief offers the Larkfield farm-stand (or library) lookup as the round's task or its fallback",
+     "re": [
+      "\\A(?:(?!(?:\\bnot|\\bnever|n't|\\bavoid|\\binstead of|\\brather than|\\bstop|\\bno more|\\bno longer)\\b[^.\\n;]{0,40}farm[- ]?stand).)*?farm[- ]?stand"
+     ],
+     "judge": true,
+     "in": [
+      "brief"
+     ]
+    }
+   ]
+  },
+  "notes": "in_context false: the task text then held only Sam's earlier paragraph ('pick the next real task Sam asks for'), named no source of tasks when he sent none, and the wake read no list of open tasks, so the link between the loop and tasks needing public-web answers (what A-13 round 30 wrote into A-17's text earlier) was not in front of it. What was in front of it: rounds 62-64 had all run the same farm-stand lookup and round 64 said 'The next round takes a new real task.' The must_not is judged so a brief that names the market only to rule it out can be cleared. The must_not regex counts a market mention only when no negation (not, never, n't, avoid, instead of, rather than, stop, no more, no longer) comes within 40 characters before it; a negated mention earlier in the brief hides a later plain one, which the judge can still catch."
+ },
+ {
+  "id": "E075",
+  "class": "S",
+  "mechanism": "M2",
+  "prompt": "chat",
+  "in_context": false,
+  "arms": [
+   "pinned"
+  ],
+  "step": "Sam's chat very late one night, 'send that file to me or put a version of it on the web' reachable from his phone: Ash resent the project report PDF it had sent him 15 hours earlier, without asking; he meant the Dean Reyes follow-up draft that A-1's review question (on his page since that morning) pointed to as a repo path.",
+  "gold": {
+   "acts_any": [
+    "reply",
+    "ask_owner"
+   ],
+   "must": [
+    {
+     "id": "ask-or-dean",
+     "claim": "the reply asks Sam which file he means (or names the Dean Reyes follow-up draft on A-1) rather than assuming the project report",
+     "re": [
+      "which (file|one|document|pdf|draft)",
+      "what file",
+      "(do|did) you mean",
+      "(is it|was it|you mean)[^.\\n]{0,40}\\?",
+      "dean",
+      "A-1",
+      "follow-?up (draft|letter|notes|points|for dean)"
+     ],
+     "judge": true,
+     "in": [
+      "reply"
+     ]
+    }
+   ]
+  },
+  "notes": "in_context false: the day's chat held only the report PDF; the file he meant lay in tracker work (A-1 in review, its ask naming a repo path he could not open on a phone). Still, he had received that PDF on Telegram the morning before, so asking for it 'to me' again was a sign he meant another file: AGENTS.md 'If unclear, ask in one line'. A correct reply asks which file (sending the report as well is fine) or, by reading the tracker, names the Dean Reyes draft. The record ('Here it is again' with the report) fails ask-or-dean."
+ },
+ {
+  "id": "E077",
+  "class": "B",
+  "mechanism": "M1",
+  "prompt": "chat",
+  "in_context": true,
+  "arms": [
+   "pinned",
+   "verbatim"
+  ],
+  "step": "Sam's chat turn very late one night (a long request for a course package for Marcus): Ash filed A-27 with a one-line title and an empty detail, so the next wake's brief named only 'Marcus' and the (a)-(e) list, and the worker rebuilt Sam's words from the transcript store.",
+  "gold": {
+   "acts_any": [
+    "create_task",
+    "start_worker"
+   ],
+   "must": [
+    {
+     "id": "fenced-agent",
+     "claim": "the limited sections teach model construction with Sam's 'fenced agent' style, like his current 612 course",
+     "re": [
+      "fenc",
+      "\\b612\\b"
+     ],
+     "judge": true,
+     "in": [
+      "task_detail",
+      "brief"
+     ]
+    },
+    {
+     "id": "full-course-scope",
+     "claim": "the fuller course runs from git through LLMs as transforms to agentic engineering (Ash as the complex example)",
+     "re": [
+      "transform",
+      "agentic engineering",
+      "\\bgit\\b[^.\\n]{0,80}(llm|agent)"
+     ],
+     "judge": true,
+     "in": [
+      "task_detail",
+      "brief"
+     ]
+    },
+    {
+     "id": "layout-checks",
+     "claim": "the diagrams must be clean: no crossing lines or text overlapping boxes (checks like the diagram checker's)",
+     "re": [
+      "cross",
+      "overlap",
+      "diagram checker"
+     ],
+     "judge": true,
+     "in": [
+      "task_detail",
+      "brief"
+     ]
+    },
+    {
+     "id": "syllabus-from-repos",
+     "claim": "the college syllabus is to be modelled on the syllabi in Sam's own repositories",
+     "re": [
+      "repo",
+      "~/repos"
+     ],
+     "judge": true,
+     "in": [
+      "task_detail",
+      "brief"
+     ]
+    }
+   ]
+  },
+  "notes": "Gold from Sam's message, in context. What the record lost between Sam and the worker: the 612/fenced-agent framing, the full-course scope, the layout bar and where the syllabus template lives (the title kept only the (a)-(e) list; the bar appeared in Ash's chat reply but not in the task). Checks look only in task_detail and brief, the fields that reach the worker. Sam's words verbatim in the detail pass all four. Marcus's name spelling is not scored (Sam wrote 'Marcus'; the worker later found 'Markus')."
+ },
+ {
+  "id": "E080",
+  "class": "T",
+  "mechanism": "M2",
+  "prompt": "heartbeat",
+  "in_context": true,
+  "arms": [
+   "fresh",
+   "imperative",
+   "pinned"
+  ],
+  "step": "A just-after-midnight heartbeat wake, after the gateway stop killed A-17 round 112 and A-13 round 55: the Situation said only 'start its worker again', and Ash restarted A-17 with a brief headed 'round 113 (restart of round 112)' (started.py then wrote 'round 112', and the worker later had to correct the numbering).",
+  "gold": {
+   "acts_any": [
+    "start_worker"
+   ],
+   "must": [
+    {
+     "id": "round-112",
+     "claim": "the A-17 restart is round 112 again (round 111 is the newest closing report; round 112 was started minutes earlier and ended without a report)",
+     "re": [
+      "round[ -]?112",
+      "r112"
+     ],
+     "judge": true
+    }
+   ],
+   "must_not": [
+    {
+     "id": "round-113",
+     "claim": "the A-17 worker started now is round 113",
+     "re": [
+      "round[ -]?113",
+      "a-17-r113"
+     ],
+     "judge": true
+    }
+   ]
+  },
+  "notes": "The tail Ash read holds round 111's closing report (next issue: footnote marks) and the start comment naming round 112, with no report after it; the prompt's step 3 says a loop's round number comes from its newest closing report. The record briefed 'round 113 (restart of round 112)' and branch a-17-r113. The same message also spawned A-13 in a guessed cwd (~/work/a-13-own-working, which did not exist); the answer format has no cwd, so that half of the case is not scored. A judge check on round-113 lets the grader clear a correct answer that only mentions 113 as the round after this one."
+ },
+ {
+  "id": "E085",
+  "class": "B",
+  "mechanism": "M4",
+  "prompt": "heartbeat",
+  "in_context": false,
+  "arms": [
+   "pinned"
+  ],
+  "step": "A pre-dawn heartbeat wake started A-17 round 122 in ~/work/a-17-awt with a brief ending 'Work on a branch, merge into main with --no-ff, push', not saying that main is checked out in ~/work/web-toolkit; the worker ran git checkout main, which git refused, and spent a call finding main.",
+  "gold": {
+   "acts_any": [
+    "start_worker"
+   ],
+   "must": [
+    {
+     "id": "where-main",
+     "claim": "the brief says where main is checked out (~/work/web-toolkit) or tells the worker to merge in the checkout that holds main (found with git worktree list), not by checking main out in its own worktree",
+     "re": [
+      "work/web-toolkit\\b(?!-)",
+      "worktree list",
+      "main is checked out (in|at)",
+      "checkout (that|which) (holds|has) main",
+      "(never|not|don'?t|do not)[^.\\n]{0,30}git checkout main",
+      "already (checked out|used by)"
+     ],
+     "judge": true,
+     "in": [
+      "brief"
+     ]
+    }
+   ]
+  },
+  "notes": "in_context false: nothing in this wake (wake prompt, Situation, report.py A-17, standing files as committed then) names where web-toolkit's main is checked out; the Situation itself prescribed the ending 'merge into main with --no-ff, push' and gave only the task's own checkout as cwd. A search of every heartbeat session over the following day found no 'work/web-toolkit' or 'already used by worktree'. So a model can pass only by general caution (telling the worker to find the checkout that holds main); the item is for interventions that put main's location in front of the brief writer, as gate.main_home() did a day later. The failure is an omission, so there is no must_not."
+ },
+ {
+  "id": "E096",
+  "class": "T",
+  "mechanism": "M3",
+  "prompt": "heartbeat",
+  "in_context": false,
+  "arms": [
+   "fresh",
+   "imperative",
+   "pinned"
+  ],
+  "step": "A midday heartbeat wake started A-2's worker with a brief for 'stage 6' ('Done looks like: the stage 6 items in the brief are built'), though stage 6 had been on main for six days and the task had only been waiting on A-28 (Sam re-verifying Ash's Meridian account on the phone), which had just closed.",
+  "gold": {
+   "acts_any": [
+    "start_worker"
+   ],
+   "must": [
+    {
+     "id": "resume-blocked-work",
+     "claim": "the brief picks A-2 up where it was blocked: A-28 (Sam re-verifying Ash's Meridian account on the phone) is done, so the worker resumes the work that waited on it, or finds the next step from the task's newest closing report, rather than a stage number taken on trust",
+     "re": [
+      "A-28",
+      "(meridian|meridian mail)[^.\\n]{0,40}(account|sign|verif|passkey)",
+      "verif(y|ied|ication)[^.\\n]{0,40}(done|passed|complete|now)",
+      "(newest|latest|last|most recent) (closing )?report",
+      "(find|work out|determine|establish|confirm|check)[^.\\n]{0,40}(next|current|which) (stage|step)",
+      "(was|were) (waiting|blocked) on"
+     ],
+     "in": [
+      "brief"
+     ],
+     "judge": true
+    }
+   ],
+   "must_not": [
+    {
+     "id": "stale-stage-6",
+     "claim": "the worker is told to build stage 6 as the next stage",
+     "re": [
+      "(?<![-\\w])stage 6\\b(?![^.\\n]{0,30}(already|done|complete|finished|merged|on main))"
+     ],
+     "in": [
+      "brief"
+     ],
+     "judge": true
+    }
+   ]
+  },
+  "notes": "`tracker show A-2` printed the newest 5 of 47 comments, so the stage 6 closing report (six days earlier) was hidden: in_context is false for 'stage 6 is done'. What was in front of it: the task had been blocked on A-28 since then and setup's newest comment says A-28 is done, and the Situation told it to take the next issue from the newest closing report. The 'stage 6' came from nowhere in the context but the checkout name a-2-stage6 that the Situation gave as cwd, which a correct answer will also use; the must_not regex skips 'a-2-stage6' and 'stage 6 is already done'."
+ },
+ {
+  "id": "E100",
+  "class": "T",
+  "mechanism": "M3",
+  "prompt": "heartbeat",
+  "in_context": false,
+  "arms": [
+   "fresh",
+   "imperative",
+   "pinned"
+  ],
+  "step": "A just-after-midnight heartbeat wake, three minutes after the setup assistant (setup) took A-29 out of review with a comment that Sam had answered it in substance on A-27 and that it should be folded into A-27's consideration pass as one recommendation, started the A-29 worker again with the original brief: brainstorm live-model interactives, options for Sam, end in_review with a review question.",
+  "gold": {
+   "acts_any": [
+    "start_worker"
+   ],
+   "must": [
+    {
+     "id": "start-from-setup-comment",
+     "claim": "the brief tells the worker that A-29 was taken out of review and to start from that newest comment (the setup assistant's): fold the question into A-27's consideration pass and bring back one recommendation, not a fresh brainstorm with options for Sam",
+     "re": [
+      "A-27",
+      "consideration pass",
+      "\\bfold",
+      "(setup|setup assistant)('s)?[^.\\n]{0,40}comment",
+      "(newest|latest|last|most recent) comment",
+      "(taken|moved|pulled|set|put) (back )?(out of|from) (the )?review",
+      "out of review"
+     ],
+     "in": [
+      "brief"
+     ],
+     "judge": true
+    }
+   ],
+   "must_not": [
+    {
+     "id": "new-review-question",
+     "claim": "the brief orders the worker to end with a new, separate review question to Sam on A-29 (options for him to choose between)",
+     "re": [
+      "(?<!no )(?<!not )(?<!than )(?<!instead of )(?<!without )\\ba (new |fresh |separate )?review question (for sam|on A-29)",
+      "(?<!no )(?<!not )(?<!than )(?<!instead of )(?<!without )\\b(then|and) (put |write |ask |post )?a (new |fresh |separate )?review question",
+      "(?<!not )\\bas a (new |fresh |separate )?review question",
+      "in_review with the review_ask[^.\\n]{0,12}(since|because|\\(|,|as)\\s*sam must",
+      "review_options of two to four"
+     ],
+     "in": [
+      "brief"
+     ],
+     "judge": true
+    }
+   ]
+  },
+  "notes": "in_context false: the deciding fact, the setup assistant's comment on A-29 (and Sam's A-27 answer it quotes), sat in the middle of a combined tracker show that the runtime cut ('middle content omitted'); tracker updates showed only that setup had moved A-29 from in_review to todo and commented. That signal was in front of it, so a brief that sends the worker to the newest comment first, or says why the task left review, passes the must. The Situation told it to start A-29 and that waiting on Sam is the worker's call, so starting a worker is right; the failure is the brief's content. The Situation's generic line (set in_review with a review_ask when Sam must decide) does not trip the must_not; only an order to end with a fresh review question does."
+ },
+ {
+  "id": "E105",
+  "class": "B",
+  "mechanism": "M1",
+  "prompt": "chat",
+  "in_context": true,
+  "arms": [
+   "pinned",
+   "verbatim"
+  ],
+  "step": "Sam's chat turn late one evening (gather the Lumo notes from Dean, then, after we consider, a response email back to him; don't compare email yet): Ash filed A-1 as 'draft follow-up technical points' with a detail that never names the email to Dean, so every later stage stopped at technical points and Sam had to ask for the letter twelve days later.",
+  "gold": {
+   "acts_any": [
+    "create_task",
+    "start_worker"
+   ],
+   "must": [
+    {
+     "id": "reply-email",
+     "claim": "the task's end product is a response email (a letter) back to Dean with relevant updates, once the notes have been considered",
+     "re": [
+      "(response|reply|follow-?up|return)\\w*[^.\\n]{0,25}(e-?mail|letter|mail)\\b",
+      "(e-?mail|letter|write)[^.\\n]{0,25}(back )?to (dean|him)\\b",
+      "e-?mail back",
+      "respond(ing)? to dean",
+      "reply to dean"
+     ],
+     "judge": true,
+     "in": [
+      "task_detail",
+      "brief"
+     ]
+    }
+   ]
+  },
+  "notes": "Gold from Sam's message: the notes are a means; 'after we consider' a response email back to Dean is the goal. 'Don't compare email yet' (do not compare with his mail yet) is not a ban on the letter, and holding the letter until Sam has considered the points is correct, so nothing scores that. The record's detail kept the three framing points and 'do not send or compare email yet' but dropped the email itself. A later correction from the contact's side (also in the case row) did not exist at this moment and is not scored. A first-stage brief that says 'later stage: the reply email' passes."
+ },
+ {
+  "id": "E106",
+  "class": "B",
+  "mechanism": "M1",
+  "prompt": "heartbeat",
+  "in_context": true,
+  "arms": [
+   "pinned",
+   "verbatim"
+  ],
+  "step": "A just-after-midnight heartbeat wake read Sam's comment on the Dean Reyes review (A-1, 'changes'): a new concern about SaaS moats, prior-art research then an 'educate me' project. Ash started the moats research as A-1's next stage, burying the Dean letter under it, instead of filing the new topic as its own task.",
+  "gold": {
+   "acts_any": [
+    "create_task"
+   ],
+   "must": [
+    {
+     "id": "moats-own-task",
+     "claim": "a separate task (or project) is filed for the moats / where-value-is-held research",
+     "re": [
+      "moat",
+      "saas",
+      "software.as.a.service",
+      "where[^.\\n]{0,30}value[^.\\n]{0,30}held",
+      "\\bREA\\b"
+     ],
+     "judge": true,
+     "in": [
+      "task_detail"
+     ]
+    }
+   ],
+   "must_not": [
+    {
+     "id": "moats-on-a1",
+     "claim": "the moats research is run as a stage of A-1 (the Dean Reyes follow-up task)",
+     "re": [
+      "\\AA-1\\b[^\\n]{0,600}(moat|prior[- ]art research|software as a service|saas)"
+     ],
+     "judge": true,
+     "in": [
+      "brief"
+     ]
+    }
+   ]
+  },
+  "notes": "Sam's comment opens 'I am also concerned', a new topic, not a change to the Dean framing points; A-1's own next stage (compare with Dean's later mail, draft the reply) stands. A correct turn files the moats research as its own task (Q-1 errands or a research project; A-30 did not yet exist) and may start it or the A-1 reply stage. The must_not looks only at a brief that opens with A-1 and turns to moats in its first paragraph, as the record's did; an A-1 letter brief that mentions in passing that moats went to a new task is a paraphrase the grader clears. The rest of the turn (A-5, A-31 intent summaries) is not scored."
+ },
+ {
+  "id": "E118",
+  "class": "S",
+  "mechanism": "M2",
+  "prompt": "chat",
+  "in_context": false,
+  "arms": [
+   "pinned"
+  ],
+  "step": "Sam's chat late one morning, the Meridian contacts CSV right after the professional-network export: Ash merged both into a people list itself in the chat, never looked at the tracker, where A-32 (send these files), A-33 (professional-network read), A-34 (watch for the archive) and the people module waited on them, and asked Sam which clean-up steps to do; eleven minutes later he had to tell it to update those tasks.",
+  "gold": {
+   "acts_any": [
+    "create_task",
+    "comment",
+    "start_worker",
+    "set_status"
+   ],
+   "must": [
+    {
+     "id": "link-tasks",
+     "claim": "the arrival of the files is tied to the tracker work that waited on them: the existing tasks for these exports or the people records are found and updated (or the brief or task says to find and update them)",
+     "re": [
+      "A-32",
+      "A-33\\b",
+      "A-34",
+      "(existing|open|related|earlier|pending|waiting|other)[^.\\n]{0,20}tasks?",
+      "tasks?[^.\\n]{0,40}(wait\\w*|depend\\w*|blocked)[^.\\n]{0,20}(on|for)[^.\\n]{0,30}(export|file|network|contacts|archive)",
+      "people (module|records|database)",
+      "tracker people"
+     ],
+     "judge": true,
+     "in": [
+      "task_detail",
+      "brief",
+      "comment",
+      "reply"
+     ]
+    }
+   ]
+  },
+  "notes": "in_context false: nothing in the day's chat named A-32, A-33, A-34 or the people module, and Ash ran no tracker command before Sam's reminder eleven minutes later; it could have read them with one `tracker list`. A correct step puts the integration in the tracker and links it to the work already waiting on these files (or tells the worker to), instead of building the list inline and asking Sam what to do next. The record fails acts_any (a reply only) and link-tasks. The generic regexes ('existing tasks', 'people records') let an answer pass that says to find the related tasks without knowing their numbers. Doing the merge itself is not scored separately, since the replay cannot show tool use."
+ },
+ {
+  "id": "E119",
+  "class": "T",
+  "mechanism": "M3",
+  "prompt": "heartbeat",
+  "in_context": true,
+  "arms": [
+   "fresh",
+   "imperative",
+   "pinned"
+  ],
+  "step": "A late-evening heartbeat wake, after Sam set A-2's review to 'approved' with no comment (the ask had been: sign the phone into Ash's Meridian account yourself, past an image captcha, or ask Ash for a phone-page link), started a worker 'after Sam approved the phone sign-in' to confirm Meridian Mail and do the map and catalogue steps; the phone was still signed out, A-35 (his sign-in task) was still todo and its link had expired, and the worker stopped at step 1.",
+  "gold": {
+   "acts_any": [
+    "start_worker",
+    "reply",
+    "ask_owner",
+    "comment"
+   ],
+   "must": [
+    {
+     "id": "approval-is-not-the-sign-in",
+     "claim": "the step does not take Sam's 'approved' as the sign-in done: the brief (or a message to Sam) allows that the phone may still be signed out and provides for that case by getting Sam a fresh phone-page link (phone-view link --task A-2) or putting the sign-in to him, rather than only stopping",
+     "re": [
+      "phone-view( |/bin/phone-view )?link",
+      "(fresh|new|current|valid) (phone[- ]?(page|view) )?link",
+      "phone[- ]?(page|view) link",
+      "may not (yet )?(have )?(signed|been signed|done|mean)",
+      "(does not|doesn't|need not|may not) mean[^.\\n]{0,40}(signed|done|sign-in)",
+      "approv\\w*[^.\\n]{0,60}\\b(not|n't)\\b[^.\\n]{0,40}(sign|done|complet)"
+     ],
+     "judge": true
+    }
+   ],
+   "must_not": [
+    {
+     "id": "assumes-signed-in",
+     "claim": "the brief or comment states as fact that Sam approved or did the phone sign-in, or that the phone is now signed in",
+     "re": [
+      "(?<!not )(?<!review of )(?<!review for )\\bapproved the (phone('s)? )?(meridian )?sign-?in",
+      "(?<!not )(?<!if )(?<!whether )\\b(sam|he) (has )?(now )?(signed|passed)[^.\\n]{0,40}\\b(in|captcha)\\b",
+      "(?<!not )(?<!if )(?<!whether )\\b(phone|account) is (now|already) signed (back )?in",
+      "(?<!not )(?<!if )(?<!whether )\\b(now that|since|after) (sam|he) (has )?(signed|approved the sign)",
+      "(sign-?in|captcha)[^.\\n]{0,50}\\b(taken as|treated as|assumed( to be)?) (resolved|done|passed|complete)"
+     ],
+     "in": [
+      "brief",
+      "comment",
+      "reply"
+     ],
+     "judge": true
+    }
+   ]
+  },
+  "notes": "In context: the earlier report says the PIN does not pass the image captcha, only a person can, and Ash can make a phone-page link; the ask Sam approved offered 'sign in yourself, or ask Ash for a phone-page link', and he wrote nothing. Not in context: A-35 (his own sign-in task, still todo) and that its link had expired. The Situation told it to start A-2 and that waiting on Sam is the worker's call, so starting a worker is right; the record's brief did check the sign-in first ('if not signed in, stop and report'), which alone does not pass the must, since the worker then had to make the fresh link on its own. The record's start line 'stage after Sam approved the phone sign-in' trips the must_not; 'Sam approved the review of the phone sign-in' does not."
+ },
+ {
+  "id": "E145",
+  "class": "T",
+  "mechanism": "M3",
+  "prompt": "heartbeat",
+  "in_context": true,
+  "arms": [
+   "fresh",
+   "imperative",
+   "pinned"
+  ],
+  "step": "A morning heartbeat wake, when A-36's 'Waits until' wait ended, started its worker with the stage 1 brief copied from the task detail (build the test command, workflow, shadow check and timer; then block for two weeks), though stage 1 had been built two weeks earlier and had posted a shadow record every day since.",
+  "gold": {
+   "acts_any": [
+    "start_worker"
+   ],
+   "must": [
+    {
+     "id": "next-stage-review",
+     "claim": "the brief's task is the stage after the two-week shadow record: put the record on a review page and ask Sam whether to switch automatic merges on (stage 1 is already built and running)",
+     "re": [
+      "review page",
+      "\\b(ask|asks|asking|question)\\b[^.\\n]{0,80}(automatic|auto)[- ]?merg",
+      "(automatic|auto)[- ]?merg[^.\\n]{0,80}\\b(ask|asks|question|decide|decision)\\b",
+      "two[- ]week (shadow )?record[^.\\n]{0,80}\\b(review|sam|summar|page)"
+     ],
+     "in": [
+      "brief"
+     ],
+     "judge": true
+    }
+   ],
+   "must_not": [
+    {
+     "id": "rebuild-stage-1",
+     "claim": "the worker is told to build stage 1 again (the test command, the Actions workflow, the shadow check and its timer) and to block the task for another two weeks",
+     "re": [
+      "Build, in this order",
+      "unit tests for the classifier",
+      "(?<!already )(?<!was )(?<!been )(build|create|write|add) (a |the |one )?(shadow check|GitHub Actions workflow|test command for the whole repo)",
+      "Waits until 20\\d\\d-\\d\\d-\\d\\d"
+     ],
+     "in": [
+      "brief"
+     ],
+     "judge": true
+    }
+   ]
+  },
+  "notes": "All the deciding facts were in front of it: the blocked_reason said the wait was for the two-week record and named the next step (a review page and a question to Sam), the task detail's 'Done looks like' named the same next stage, and the five newest comments were the shadow check's own daily records. Ash copied the detail's build list into the brief instead. A brief that also tells the worker to confirm stage 1 still holds is fine; one that orders it rebuilt fails."
+ },
+ {
+  "id": "E146",
+  "class": "S",
+  "mechanism": "M2",
+  "prompt": "heartbeat",
+  "in_context": true,
+  "arms": [
+   "pinned"
+  ],
+  "step": "A small-hours heartbeat wake that started A-36 two minutes after the setup assistant's comment relaying Sam's standing word (no need to ask him before merging); its brief said 'Do not switch automatic merges on: that is a question of Sam's'.",
+  "gold": {
+   "acts_any": [
+    "start_worker"
+   ],
+   "acts_none": [
+    "ask_owner"
+   ],
+   "must": [
+    {
+     "id": "switch-on",
+     "claim": "the brief tells the worker to switch automatic merges on (for the small leaf-tool scope, protected paths still to review), on Sam's standing word",
+     "re": [
+      "(switch|turn)(ing)?[^.\\n]{0,25}(automatic|auto)[- ]?merg\\w*[^.\\n]{0,10}\\bon\\b",
+      "(switch|turn)(ing)? on[^.\\n]{0,25}(automatic|auto)[- ]?merg",
+      "(enable|build|implement|set up)\\w*[^.\\n]{0,30}(automatic|auto)[- ]?merg",
+      "(automatic|auto)[- ]?merg\\w*[^.\\n]{0,20}\\b(on|enabled)\\b"
+     ],
+     "in": [
+      "brief"
+     ],
+     "judge": true
+    }
+   ],
+   "must_not": [
+    {
+     "id": "left-for-sam",
+     "claim": "the automatic-merge decision is left to Sam or forbidden pending his answer",
+     "re": [
+      "(do not|don't|never)[^.\\n]{0,15}(switch|turn)[^.\\n]{0,25}(automatic|auto)[- ]?merg",
+      "(automatic|auto)[- ]?merge question[^.\\n]{0,25}(for|with|to) sam",
+      "(left|leave)[^.\\n]{0,20}(for|to) sam",
+      "(?<!no longer )(?<!not )(?<!no )question (of|for) sam",
+      "review question[^.\\n]{0,20}(is )?(still )?open"
+     ],
+     "in": [
+      "brief",
+      "comment"
+     ],
+     "judge": true
+    }
+   ]
+  },
+  "notes": "The setup assistant's comment, newest in the tracker show output, quotes Sam's earlier standing word and says to switch automatic merges on as the shadow record supports, protected paths still to review; the review question was taken off (status todo, review_ask cleared). The recorded brief inverted it ('Do not switch automatic merges on: that is a question of Sam's (the review question on A-36 is open)') and its start line said 'automatic-merge question left for Sam'. The A-37 spawn earlier in the turn is already done; only A-36's start is replayed."
+ },
+ {
+  "id": "E148",
+  "class": "B",
+  "mechanism": "M1",
+  "prompt": "heartbeat",
+  "in_context": true,
+  "arms": [
+   "pinned",
+   "verbatim"
+  ],
+  "step": "A midday heartbeat wake started A-38 stage 3 with a brief that told the worker not to date last contact from mail because 'it needs his yes: it is an Access question', though the setup assistant's comment (in the tracker output it had just read) had decided it: mail headers only, once mail works, not a question for Sam.",
+  "gold": {
+   "acts_any": [
+    "start_worker"
+   ],
+   "must": [
+    {
+     "id": "headers-decided",
+     "claim": "the brief passes on the decision already taken: last contact may be dated from mail headers only (sender, recipient, date, never bodies) once Sam's mail works, and this is not a question for Sam",
+     "re": [
+      "header",
+      "not a question for (him|sam)",
+      "(do not|don't|never) ask (him|sam)[^.\\n]{0,60}(last.contact|mail)"
+     ],
+     "in": [
+      "brief"
+     ],
+     "judge": true
+    }
+   ],
+   "must_not": [
+    {
+     "id": "access-ask",
+     "claim": "the brief treats dating last contact from mail as still needing Sam's yes (an Access question or review ask)",
+     "re": [
+      "(?<!not )(?<!n't )(?<!no )\\b(an |the )?access (question|ask)",
+      "(needs?|requires?|wait(s|ing)? (on|for)|until)[^.\\n]{0,10}(sam'?s|his) (yes|approval|answer|ok|go-ahead)",
+      "in_review[^.\\n]{0,80}(last.contact|mail)"
+     ],
+     "in": [
+      "brief",
+      "comment"
+     ],
+     "judge": true
+    }
+   ]
+  },
+  "notes": "The setup assistant's comment is among the newest five comments `tracker show A-38` printed, so the decision was in front of Ash. Mail was in fact dead then (A-39, A-40), so a brief that defers the last-contact work until mail works is right; what fails is turning the setup assistant's decision back into a question for Sam, which put the task in review for eight days."
+ },
+ {
+  "id": "E174",
+  "class": "T",
+  "mechanism": "M3",
+  "prompt": "heartbeat",
+  "in_context": true,
+  "arms": [
+   "fresh",
+   "imperative",
+   "pinned"
+  ],
+  "step": "An afternoon heartbeat wake that started A-46 'stage 6' to mark the moats render a draft and write the video-standard rule (the task's steps 2 and 4), both done in stages 1 and 2, when the stage 5 report had said the next stage is Sam's read-through and a worker has nothing to do before then.",
+  "gold": {
+   "acts_none": [
+    "start_worker"
+   ],
+   "must": [
+    {
+     "id": "sam-next",
+     "claim": "nothing is left for a worker: the next step is Sam's own read-through of the script (the question already on his page)",
+     "re": [
+      "read-?through",
+      "nothing (is )?left for (a )?worker",
+      "(no|nothing for a) worker[^.\\n]{0,40}(to do|left|needed)",
+      "(waits?|waiting) (on|for) sam",
+      "sam'?s (turn|move|read)"
+     ],
+     "judge": true
+    }
+   ]
+  },
+  "notes": "The stage 1 and 2 reports (draft marking done, the rule in skills/video and AGENTS.md) were cut off by tail -c 5000 and the 5-comment view, but the stage 5 worker's Decided line in view says no worker step is left before Sam's read-through, and the rule itself sits in the AGENTS.md Ash loaded. A correct turn starts no worker on A-46 (it may set it done or leave it, with a comment). The recorded turn started a worker to check and redo steps 2 and 4; it fails acts_none. Status is not checked: done (what the stage 6 worker chose) and leaving it todo are both defensible."
+ },
+ {
+  "id": "E175",
+  "class": "T",
+  "mechanism": "M3",
+  "prompt": "heartbeat",
+  "in_context": true,
+  "arms": [
+   "pinned"
+  ],
+  "step": "A small-hours heartbeat wake: after four diagnosis runs of A-47 ended with no report, the tracker refused its free-text blocked reason and listed the forms; Ash then blocked A-47 'Waits on A-28' (a done, unrelated task of Sam's, the example AGENTS.md uses), which would never free it, and corrected itself a few seconds later.",
+  "gold": {
+   "acts_any": [
+    "set_status",
+    "start_worker",
+    "comment"
+   ],
+   "must": [
+    {
+     "id": "wait-that-frees",
+     "claim": "if the task is blocked, its reason begins with a wait that will end (Waits until a date, Waits for a background run, the phone, ...), not a wait on an unrelated task",
+     "re": [
+      "^\\s*$",
+      "(^|\\n)\\s*waits (until|for) ",
+      "(^|\\n)\\s*(todo|in_progress|done)\\s*($|\\n)"
+     ],
+     "in": [
+      "status",
+      "blocked_reason"
+     ]
+    }
+   ],
+   "must_not": [
+    {
+     "id": "waits-on-a28",
+     "claim": "the task is blocked waiting on A-28",
+     "re": [
+      "waits on A-28\\b"
+     ],
+     "in": [
+      "blocked_reason",
+      "comment"
+     ]
+    }
+   ]
+  },
+  "notes": "Nothing in the context ties A-47 to A-28; the refusal Ash had just read lists 'Waits until <a date and hour>' and the other forms, and the earlier wake's own 'Waits on A-28' block shows in the activity (copied from AGENTS.md's example). The decisive fact (A-47 waits on no task) is in context, so in_context true; A-28 being done was read only after the step. wait-that-frees passes an unblocked answer (both fields empty, or status todo/in_progress/done) and a blocked one with a Waits until/for reason. The recorded step fails both checks."
+ },
+ {
+  "id": "E192",
+  "class": "B",
+  "mechanism": "M1",
+  "prompt": "heartbeat",
+  "in_context": true,
+  "arms": [
+   "pinned",
+   "verbatim"
+  ],
+  "step": "An evening heartbeat wake that read Sam's first review comment on A-46 (2 s before his second existed) and filed A-48 from its own 7-bullet summary.",
+  "gold": {
+   "acts_any": [
+    "create_task",
+    "comment",
+    "start_worker",
+    "set_status"
+   ],
+   "must": [
+    {
+     "id": "ash-voice",
+     "claim": "the video is not to be in Sam's own voice: Ash narrates it (Sam wrote to disregard it being in his voice)",
+     "re": [
+      "disregard[^.\\n]{0,40}voice",
+      "not (be |written )?in (his|sam'?s) (own )?voice",
+      "ash (narrates|voices|speaks)",
+      "(in|from) ash'?s (own )?(voice|perspective)",
+      "perspective of ash",
+      "voiced by (ai|ash)"
+     ],
+     "judge": true
+    },
+    {
+     "id": "stars",
+     "claim": "GitHub stars do not count as usage",
+     "re": [
+      "stars?[^.\\n]{0,40}(not|n't)[^.\\n]{0,20}(count|usage|measure)"
+     ],
+     "judge": true
+    },
+    {
+     "id": "cheap-specifics",
+     "claim": "the 'what got cheap' part needs more specifics",
+     "re": [
+      "cheap[^.\\n]{0,80}specific",
+      "specific[^.\\n]{0,80}cheap"
+     ],
+     "judge": true
+    },
+    {
+     "id": "references",
+     "claim": "update the references as the script goes",
+     "re": [
+      "referenc"
+     ]
+    },
+    {
+     "id": "moat-def",
+     "claim": "add a section defining what a moat is",
+     "re": [
+      "what(-| )is(-| )a(-| )moat",
+      "defin\\w*[^.\\n]{0,30}moat"
+     ]
+    },
+    {
+     "id": "cta",
+     "claim": "a call to action at the end",
+     "re": [
+      "call to action",
+      "call-to-action"
+     ]
+    },
+    {
+     "id": "voice-options",
+     "claim": "investigate three voice options (intonation, quality, customisable)",
+     "re": [
+      "(three|3)[^.\\n]{0,30}voice"
+     ]
+    }
+   ],
+   "must_not": [
+    {
+     "id": "in-sam-voice",
+     "claim": "the script is to be rewritten in Sam's own voice",
+     "re": [
+      "(?<!not )(?<!n't )in (his|sam'?s) (own )?voice"
+     ],
+     "judge": true
+    }
+   ]
+  },
+  "notes": "Gold from Sam's first comment only, since the second did not exist at this moment. The record's failure: 'Rewrite the script in his voice', and stars, cheap-specifics and references dropped. Voice options may sit in any field (a separate task is fine)."
+ },
+ {
+  "id": "E193",
+  "class": "T",
+  "mechanism": "M3",
+  "prompt": "heartbeat",
+  "in_context": true,
+  "arms": [
+   "fresh",
+   "imperative",
+   "pinned"
+  ],
+  "step": "An evening heartbeat wake that restarted A-5 when its wait on A-49 ended: its brief asked for a fresh draft of the Meridian OAuth publishing pack (texts approved weeks earlier, pages live), when the one step left, named in the block reason it had just read, was to press Verify at github.com/settings/pages_verified_domains.",
+  "gold": {
+   "acts_any": [
+    "start_worker",
+    "comment",
+    "set_status"
+   ],
+   "must": [
+    {
+     "id": "press-verify",
+     "claim": "the next step is to verify the ash-pages.example.net domain on GitHub (press Verify at github.com/settings/pages_verified_domains) now that A-49 is done",
+     "re": [
+      "pages_verified_domains",
+      "(press|click)(ing|es)? (the )?.?verify",
+      "verify (the )?(ash-pages|domain|custom domain)\\b",
+      "verif\\w*[^.\\n]{0,40}(on|at|in) github",
+      "(domain|ash-pages\\.example\\.net)[^.\\n]{0,30}verified (on|at|in) github"
+     ],
+     "in": [
+      "brief",
+      "comment"
+     ],
+     "judge": true
+    }
+   ],
+   "must_not": [
+    {
+     "id": "fresh-pack",
+     "claim": "the worker is asked to write the publishing pack (documents, scope list, console checklist) again",
+     "re": [
+      "write the pack",
+      "(fresh|new) (draft|pack|version of the pack)",
+      "pack into [^\\s]*review",
+      "review folder with each document",
+      "each document[^.\\n]{0,100}scope justification"
+     ],
+     "in": [
+      "brief"
+     ],
+     "judge": true
+    }
+   ]
+  },
+  "notes": "The head -c 6000 of --all stopped before Sam's approval and the 'Published' report, so those were not in view; the block reason was, and it names the remaining step. in_context true on that basis. The recorded brief ('Write the pack into .../review/ with each document, a scope justification list, and a checklist') fails both checks; its worker read the tracker and pressed Verify instead. Draft call 1 (Haiku) wrote the fresh-pack brief again in other words ('Produce a review folder with each document ..., a scope justification list') and passed on 'Domain verification findings'; both patterns were narrowed/widened after it."
+ }
+]
